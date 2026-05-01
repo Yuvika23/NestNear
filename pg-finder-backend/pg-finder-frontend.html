@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NestNear — PG Finder for Students</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #F5F0E8;
+    --card: #FFFEF9;
+    --ink: #1A1A1A;
+    --ink2: #5A5248;
+    --accent: #C84B31;
+    --accent2: #E8A020;
+    --green: #2D6A4F;
+    --border: #E2DDD4;
+    --shadow: 0 2px 16px rgba(26,26,26,0.08);
+    --radius: 16px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+
+  /* NAV */
+  nav {
+    background: var(--card);
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 5%;
+    display: flex; align-items:center; justify-content:space-between;
+    height: 64px; position: sticky; top:0; z-index:100;
+  }
+  .logo { font-family:'Fraunces',serif; font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:-0.5px; }
+  .logo span { color: var(--ink); }
+  .nav-links { display:flex; gap:8px; }
+  .nav-btn {
+    padding: 8px 18px; border-radius: 40px; font-size:0.875rem; font-weight:500;
+    cursor:pointer; border:none; transition: all 0.2s;
+  }
+  .nav-btn.outline { background:transparent; border:1.5px solid var(--border); color:var(--ink2); }
+  .nav-btn.outline:hover { border-color:var(--ink); color:var(--ink); }
+  .nav-btn.filled { background:var(--accent); color:#fff; }
+  .nav-btn.filled:hover { background:#A83820; }
+
+  /* HERO */
+  .hero {
+    padding: 64px 5% 48px;
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items:center;
+  }
+  .hero-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#FFF3E0; border: 1px solid var(--accent2);
+    padding:4px 12px; border-radius:40px; font-size:0.75rem;
+    font-weight:600; color:#B8700A; margin-bottom:16px; letter-spacing:0.5px;
+  }
+  .hero h1 {
+    font-family:'Fraunces',serif; font-size:clamp(2.2rem,4vw,3.4rem);
+    font-weight:800; line-height:1.1; letter-spacing:-1px; margin-bottom:16px;
+  }
+  .hero h1 em { font-style:italic; color:var(--accent); }
+  .hero p { color:var(--ink2); font-size:1.05rem; line-height:1.6; margin-bottom:32px; }
+  .hero-stats { display:flex; gap:32px; }
+  .stat-item { }
+  .stat-num { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:800; color:var(--ink); }
+  .stat-label { font-size:0.8rem; color:var(--ink2); margin-top:2px; }
+
+  /* SEARCH BAR */
+  .search-section {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .search-row { display:flex; gap:10px; margin-bottom:14px; }
+  .search-input {
+    flex:1; padding:12px 16px; border:1.5px solid var(--border);
+    border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.95rem;
+    background:var(--bg); outline:none; transition:border 0.2s;
+  }
+  .search-input:focus { border-color:var(--accent); }
+  .search-btn {
+    padding:12px 24px; background:var(--accent); color:#fff;
+    border:none; border-radius:10px; font-weight:600; cursor:pointer;
+    font-family:'DM Sans',sans-serif; font-size:0.95rem;
+    transition:background 0.2s;
+  }
+  .search-btn:hover { background:#A83820; }
+  .filter-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-chip {
+    padding:7px 14px; border-radius:40px; border:1.5px solid var(--border);
+    background:var(--bg); font-size:0.8rem; font-weight:500; cursor:pointer;
+    transition:all 0.2s; color:var(--ink2);
+  }
+  .filter-chip:hover, .filter-chip.active {
+    border-color:var(--accent); background:var(--accent); color:#fff;
+  }
+  select.filter-chip { appearance:none; padding-right:10px; }
+
+  /* MAIN LAYOUT */
+  .main { max-width:1200px; margin:0 auto; padding:0 5% 64px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .section-title { font-family:'Fraunces',serif; font-size:1.5rem; font-weight:700; }
+  .count-badge { background:var(--border); padding:4px 12px; border-radius:40px; font-size:0.8rem; font-weight:600; color:var(--ink2); }
+
+  /* GRID */
+  .listings-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:20px; }
+
+  /* CARD */
+  .pg-card {
+    background:var(--card); border:1.5px solid var(--border);
+    border-radius:var(--radius); overflow:hidden;
+    box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s;
+    cursor:pointer;
+  }
+  .pg-card:hover { transform:translateY(-4px); box-shadow:0 8px 32px rgba(26,26,26,0.12); }
+  .card-img { width:100%; height:200px; object-fit:cover; display:block; background:#E8E0D4; position:relative; }
+  .card-img-wrap { position:relative; }
+  .card-badges { position:absolute; top:12px; left:12px; display:flex; gap:6px; }
+  .badge {
+    padding:4px 10px; border-radius:40px; font-size:0.7rem; font-weight:700;
+    letter-spacing:0.3px; backdrop-filter:blur(8px);
+  }
+  .badge.verified { background:rgba(45,106,79,0.9); color:#fff; }
+  .badge.type { background:rgba(255,255,255,0.92); color:var(--ink); border:1px solid var(--border); }
+  .badge.gender-f { background:rgba(200,75,49,0.9); color:#fff; }
+  .badge.gender-m { background:rgba(26,100,180,0.9); color:#fff; }
+  .badge.gender-a { background:rgba(100,80,160,0.9); color:#fff; }
+  .save-btn {
+    position:absolute; top:12px; right:12px;
+    background:rgba(255,255,255,0.92); border:none; width:34px; height:34px;
+    border-radius:50%; cursor:pointer; font-size:1rem; display:flex;
+    align-items:center; justify-content:center; transition:all 0.2s;
+    backdrop-filter:blur(8px);
+  }
+  .save-btn:hover { background:var(--accent); color:#fff; }
+  .save-btn.saved { background:var(--accent); color:#fff; }
+  .card-body { padding:16px; }
+  .card-title { font-family:'Fraunces',serif; font-size:1.05rem; font-weight:700; margin-bottom:4px; line-height:1.3; }
+  .card-area { font-size:0.82rem; color:var(--ink2); margin-bottom:10px; display:flex; align-items:center; gap:4px; }
+  .card-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .card-rent { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:800; color:var(--accent); }
+  .card-rent span { font-size:0.75rem; font-weight:400; color:var(--ink2); font-family:'DM Sans',sans-serif; }
+  .card-rating { display:flex; align-items:center; gap:5px; background:#FFF8EC; padding:4px 10px; border-radius:40px; }
+  .card-rating .stars { color:var(--accent2); font-size:0.85rem; }
+  .card-rating .score { font-weight:700; font-size:0.85rem; }
+  .card-rating .count { font-size:0.75rem; color:var(--ink2); }
+  .amenities { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+  .amenity-tag {
+    padding:3px 9px; border-radius:40px; font-size:0.72rem; font-weight:500;
+    background:var(--bg); border:1px solid var(--border); color:var(--ink2);
+  }
+  .card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:12px; border-top:1px solid var(--border); }
+  .distance { font-size:0.78rem; color:var(--green); font-weight:600; display:flex; align-items:center; gap:4px; }
+  .sharing { font-size:0.78rem; color:var(--ink2); }
+  .view-btn {
+    padding:8px 16px; background:var(--ink); color:#fff;
+    border:none; border-radius:8px; font-size:0.8rem; font-weight:600;
+    cursor:pointer; transition:background 0.2s; font-family:'DM Sans',sans-serif;
+  }
+  .view-btn:hover { background:var(--accent); }
+
+  /* MODAL */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(26,26,26,0.6);
+    z-index:1000; display:flex; align-items:center; justify-content:center;
+    padding:20px; opacity:0; pointer-events:none; transition:opacity 0.2s;
+    backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal {
+    background:var(--card); border-radius:20px; max-width:680px; width:100%;
+    max-height:90vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,0.2);
+    transform:translateY(20px); transition:transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .modal-img { width:100%; height:260px; object-fit:cover; }
+  .modal-body { padding:28px; }
+  .modal-title { font-family:'Fraunces',serif; font-size:1.6rem; font-weight:800; margin-bottom:6px; }
+  .modal-location { color:var(--ink2); margin-bottom:20px; font-size:0.9rem; }
+  .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+  .modal-stat { background:var(--bg); padding:14px; border-radius:12px; }
+  .modal-stat-label { font-size:0.72rem; color:var(--ink2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .modal-stat-val { font-family:'Fraunces',serif; font-size:1.3rem; font-weight:700; }
+  .modal-desc { color:var(--ink2); line-height:1.7; margin-bottom:20px; font-size:0.95rem; }
+  .modal-amenities { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+  .modal-amenity { padding:6px 14px; background:var(--bg); border:1.5px solid var(--border); border-radius:40px; font-size:0.82rem; font-weight:500; }
+  .sub-ratings { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:24px; }
+  .sub-rating { background:var(--bg); padding:12px; border-radius:12px; text-align:center; }
+  .sub-rating-label { font-size:0.7rem; color:var(--ink2); margin-bottom:4px; font-weight:600; }
+  .sub-rating-val { font-family:'Fraunces',serif; font-size:1.1rem; font-weight:700; }
+  .modal-actions { display:flex; gap:10px; }
+  .modal-cta {
+    flex:1; padding:14px; border-radius:12px; font-size:1rem; font-weight:600;
+    cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all 0.2s;
+  }
+  .modal-cta.primary { background:var(--accent); color:#fff; }
+  .modal-cta.primary:hover { background:#A83820; }
+  .modal-cta.secondary { background:var(--bg); color:var(--ink); border:1.5px solid var(--border); }
+  .modal-close {
+    position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.9);
+    border:none; width:36px; height:36px; border-radius:50%; cursor:pointer;
+    font-size:1rem; display:flex; align-items:center; justify-content:center;
+    font-weight:700; backdrop-filter:blur(8px); z-index:10;
+  }
+  .modal-img-wrap { position:relative; }
+
+  /* HERO RIGHT */
+  .hero-visual {
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .mini-card {
+    background:var(--card); border:1.5px solid var(--border); border-radius:14px;
+    padding:14px 16px; display:flex; align-items:center; gap:14px;
+    box-shadow:var(--shadow); animation:float 3s ease-in-out infinite;
+  }
+  .mini-card:nth-child(2) { animation-delay:1s; margin-left:24px; }
+  .mini-card:nth-child(3) { animation-delay:2s; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .mini-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .mini-icon.orange { background:#FFF3E0; }
+  .mini-icon.green { background:#E8F5E9; }
+  .mini-icon.red { background:#FFEBEE; }
+  .mini-info { flex:1; }
+  .mini-title { font-weight:600; font-size:0.88rem; }
+  .mini-sub { font-size:0.75rem; color:var(--ink2); }
+  .mini-price { font-family:'Fraunces',serif; font-weight:800; font-size:1rem; color:var(--accent); }
+
+  /* EMPTY */
+  .empty { text-align:center; padding:60px 20px; color:var(--ink2); }
+  .empty-icon { font-size:3rem; margin-bottom:12px; }
+  .empty h3 { font-family:'Fraunces',serif; font-size:1.3rem; margin-bottom:6px; color:var(--ink); }
+
+  /* TOAST */
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+    background:var(--ink); color:#fff; padding:12px 24px; border-radius:40px;
+    font-size:0.88rem; font-weight:500; z-index:9999; transition:transform 0.3s;
+    white-space:nowrap;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  @media(max-width:768px) {
+    .hero { grid-template-columns:1fr; }
+    .hero-visual { display:none; }
+    .listings-grid { grid-template-columns:1fr; }
+    .modal-grid { grid-template-columns:1fr; }
+    .sub-ratings { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Nest<span>Near</span></div>
+  <div class="nav-links">
+    <button class="nav-btn outline" onclick="showToast('Login coming soon!')">Login</button>
+    <button class="nav-btn filled" onclick="showToast('Register coming soon!')">List your PG</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-tag">🎓 Made for college students</div>
+    <h1>Find your <em>perfect</em> PG near campus</h1>
+    <p>Verified by real students. No brokers. No scams. Just honest reviews from your seniors.</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num" id="stat-count">8</div>
+        <div class="stat-label">PGs Listed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Student Verified</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Broker Fees</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="mini-card">
+      <div class="mini-icon orange">🏠</div>
+      <div class="mini-info">
+        <div class="mini-title">Kavitha Aunty's PG</div>
+        <div class="mini-sub">T. Nagar · 0.3 km · ⭐ 4.9</div>
+      </div>
+      <div class="mini-price">₹7,500</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-icon green">✅</div>
+      <div class="mini-info">
+        <div class="mini-title">Verified by 12 students</div>
+        <div class="mini-sub">Meals · WiFi · CCTV</div>
+      </div>
+      <div class="mini-price">Girls</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-icon red">📍</div>
+      <div class="mini-info">
+        <div class="mini-title">Nova Co-Living</div>
+        <div class="mini-sub">OMR · 1.5 km · ⭐ 4.5</div>
+      </div>
+      <div class="mini-price">₹11,000</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- SEARCH -->
+  <div class="search-section">
+    <div class="search-row">
+      <input class="search-input" id="searchInput" type="text" placeholder="🔍  Search by name, area or amenity..." oninput="filterListings()"/>
+      <button class="search-btn">Search</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip active" onclick="setFilter('gender','')">All</button>
+      <button class="filter-chip" onclick="setFilter('gender','Male')">👨 Boys</button>
+      <button class="filter-chip" onclick="setFilter('gender','Female')">👩 Girls</button>
+      <button class="filter-chip" onclick="setFilter('gender','Any')">🤝 Any</button>
+      <select class="filter-chip" onchange="setFilter('type', this.value)">
+        <option value="">All Types</option>
+        <option value="PG">PG</option>
+        <option value="Flat">Flat</option>
+        <option value="Room">Room</option>
+        <option value="Hostel">Hostel</option>
+      </select>
+      <select class="filter-chip" onchange="setFilter('maxRent', this.value)">
+        <option value="">Any Budget</option>
+        <option value="5000">Under ₹5,000</option>
+        <option value="7000">Under ₹7,000</option>
+        <option value="10000">Under ₹10,000</option>
+      </select>
+      <select class="filter-chip" onchange="setFilter('sort', this.value)">
+        <option value="">Sort: Newest</option>
+        <option value="rent_asc">Price: Low to High</option>
+        <option value="rent_desc">Price: High to Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="distance">Nearest First</option>
+      </select>
+      <button class="filter-chip" onclick="setFilter('verified', filters.verified ? '' : 'true')" id="verifiedChip">✅ Verified Only</button>
+    </div>
+  </div>
+
+  <!-- LISTINGS -->
+  <div class="section-header">
+    <div class="section-title">PGs near your college</div>
+    <div class="count-badge" id="countBadge">8 results</div>
+  </div>
+  <div class="listings-grid" id="listingsGrid"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-img-wrap">
+      <img class="modal-img" id="modalImg" src="" alt=""/>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span id="modalVerified"></span>
+        <span id="modalGenderBadge"></span>
+        <span id="modalType"></span>
+      </div>
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-location" id="modalLocation">📍 <span></span></div>
+      <div class="modal-grid">
+        <div class="modal-stat"><div class="modal-stat-label">Monthly Rent</div><div class="modal-stat-val" id="modalRent"></div></div>
+        <div class="modal-stat"><div class="modal-stat-label">Deposit</div><div class="modal-stat-val" id="modalDeposit"></div></div>
+        <div class="modal-stat"><div class="modal-stat-label">From College</div><div class="modal-stat-val" id="modalDist"></div></div>
+        <div class="modal-stat"><div class="modal-stat-label">Sharing</div><div class="modal-stat-val" id="modalSharing"></div></div>
+      </div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">Amenities</div>
+      <div class="modal-amenities" id="modalAmenities"></div>
+      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">Ratings breakdown</div>
+      <div class="sub-ratings">
+        <div class="sub-rating"><div class="sub-rating-label">Overall</div><div class="sub-rating-val" id="srOverall"></div></div>
+        <div class="sub-rating"><div class="sub-rating-label">Cleanliness</div><div class="sub-rating-val">4.1 ⭐</div></div>
+        <div class="sub-rating"><div class="sub-rating-label">WiFi</div><div class="sub-rating-val">4.3 ⭐</div></div>
+        <div class="sub-rating"><div class="sub-rating-label">Food</div><div class="sub-rating-val">4.0 ⭐</div></div>
+        <div class="sub-rating"><div class="sub-rating-label">Safety</div><div class="sub-rating-val">4.5 ⭐</div></div>
+        <div class="sub-rating"><div class="sub-rating-label">Owner</div><div class="sub-rating-val">4.2 ⭐</div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cta primary" onclick="showToast('Contact feature coming soon!')">📞 Contact Owner</button>
+        <button class="modal-cta secondary" onclick="showToast('Added to saved!')">🔖 Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LISTINGS = [
+  { id:1, title:"Sri Lakshmi PG for Girls", type:"PG", gender:"Female", rent:6500, deposit:13000, sharing:"Double", distance:0.4, area:"Guindy, Chennai", rating:4.3, reviews:18, verified:true, verifiedCount:5, amenities:["WiFi","Meals","Geyser","CCTV","Power Backup"], description:"Well-maintained PG near Anna University main gate. Home-cooked South Indian meals, strict security, and a peaceful study environment. Very popular among CSE and ECE students.", img:"https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop" },
+  { id:2, title:"Sai Krishna Boys Hostel", type:"PG", gender:"Male", rent:5000, deposit:10000, sharing:"Triple", distance:0.5, area:"Porur, Chennai", rating:3.8, reviews:11, verified:true, verifiedCount:4, amenities:["WiFi","Geyser","Laundry","Power Backup"], description:"Budget-friendly boys PG with all basic amenities. 5 mins walk from college. Fast WiFi, 24/7 hot water. Seniors from IITs and NITs have stayed here — super study-friendly vibe.", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&auto=format&fit=crop" },
+  { id:3, title:"Green Valley Residency", type:"PG", gender:"Any", rent:9500, deposit:19000, sharing:"Single", distance:0.8, area:"Velachery, Chennai", rating:4.7, reviews:24, verified:true, verifiedCount:7, amenities:["WiFi","AC","Geyser","Laundry","CCTV","Power Backup","Parking"], description:"Premium AC single rooms for students who want privacy and comfort. High-speed fiber WiFi, separate study hall, attached bathroom. Ideal for final year and placement season students.", img:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop" },
+  { id:4, title:"Friends Flat — 3 BHK Sharing", type:"Flat", gender:"Male", rent:7000, deposit:14000, sharing:"Double", distance:1.2, area:"Adyar, Chennai", rating:4.1, reviews:7, verified:true, verifiedCount:3, amenities:["WiFi","AC","Geyser","Parking","Power Backup"], description:"3 BHK flat available for sharing — 2 rooms vacant. Fully furnished, modular kitchen, great terrace view. Looking for serious students only. No loud music after 11pm. Feels like home.", img:"https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop" },
+  { id:5, title:"Kavitha Aunty's PG", type:"PG", gender:"Female", rent:7500, deposit:15000, sharing:"Double", distance:0.3, area:"T. Nagar, Chennai", rating:4.9, reviews:42, verified:true, verifiedCount:12, amenities:["WiFi","Meals","Geyser","CCTV"], description:"The most famous PG near campus — Kavitha aunty's home-cooked food is legendary. Students have been coming here for 10+ years. Feels exactly like home. Always full, book fast.", img:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop" },
+  { id:6, title:"Budget Room Near Back Gate", type:"Room", gender:"Male", rent:3500, deposit:7000, sharing:"Triple", distance:0.2, area:"Chromepet, Chennai", rating:3.5, reviews:9, verified:true, verifiedCount:3, amenities:["WiFi","Power Backup"], description:"Cheapest option near college back gate. No frills, just a clean room and bed. Great for students on tight budget. Landlord is very chill, no curfew. Bachelors only.", img:"https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop" },
+  { id:7, title:"Nova Co-Living Space", type:"PG", gender:"Any", rent:11000, deposit:22000, sharing:"Single", distance:1.5, area:"Sholinganallur, Chennai", rating:4.5, reviews:15, verified:true, verifiedCount:6, amenities:["WiFi","AC","Geyser","Laundry","Gym","CCTV","Power Backup","Parking"], description:"Modern co-living designed for students and young professionals. Common lounge area, bean bags, whiteboard walls for group study. High-speed 200Mbps WiFi. Very Instagram-worthy.", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&auto=format&fit=crop" },
+  { id:8, title:"Rajesh Uncle's Boys PG", type:"PG", gender:"Male", rent:5500, deposit:11000, sharing:"Double", distance:0.6, area:"Anna Nagar, Chennai", rating:4.2, reviews:31, verified:true, verifiedCount:9, amenities:["WiFi","Meals","Geyser","Power Backup"], description:"Old-school, reliable PG. Been running for 15 years. Clean rooms, South Indian breakfast included. Rajesh uncle personally knows every student. Very safe neighbourhood.", img:"https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop" }
+];
+
+let filters = { gender:'', type:'', maxRent:'', sort:'', verified:'', search:'' };
+let saved = new Set();
+
+function setFilter(key, val) {
+  filters[key] = val;
+  // Update chip UI for gender
+  if (key === 'gender') {
+    document.querySelectorAll('.filter-row .filter-chip').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+  if (key === 'verified') {
+    document.getElementById('verifiedChip').classList.toggle('active', val === 'true');
+  }
+  filterListings();
+}
+
+function filterListings() {
+  filters.search = document.getElementById('searchInput').value.toLowerCase();
+  let results = LISTINGS.filter(l => {
+    if (filters.gender && l.gender !== filters.gender) return false;
+    if (filters.type && l.type !== filters.type) return false;
+    if (filters.maxRent && l.rent > parseInt(filters.maxRent)) return false;
+    if (filters.verified && !l.verified) return false;
+    if (filters.search && !l.title.toLowerCase().includes(filters.search) &&
+        !l.area.toLowerCase().includes(filters.search) &&
+        !l.amenities.some(a => a.toLowerCase().includes(filters.search))) return false;
+    return true;
+  });
+  if (filters.sort === 'rent_asc') results.sort((a,b) => a.rent - b.rent);
+  if (filters.sort === 'rent_desc') results.sort((a,b) => b.rent - a.rent);
+  if (filters.sort === 'rating') results.sort((a,b) => b.rating - a.rating);
+  if (filters.sort === 'distance') results.sort((a,b) => a.distance - b.distance);
+  renderListings(results);
+}
+
+function renderListings(list) {
+  const grid = document.getElementById('listingsGrid');
+  document.getElementById('countBadge').textContent = `${list.length} result${list.length !== 1 ? 's' : ''}`;
+  document.getElementById('stat-count').textContent = list.length;
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>No PGs found</h3><p>Try adjusting your filters</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(l => `
+    <div class="pg-card" onclick="openModal(${l.id})">
+      <div class="card-img-wrap">
+        <img class="card-img" src="${l.img}" alt="${l.title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800'"/>
+        <div class="card-badges">
+          ${l.verified ? '<span class="badge verified">✅ Verified</span>' : ''}
+          <span class="badge type">${l.type}</span>
+          <span class="badge ${l.gender === 'Female' ? 'gender-f' : l.gender === 'Male' ? 'gender-m' : 'gender-a'}">${l.gender === 'Female' ? '👩 Girls' : l.gender === 'Male' ? '👨 Boys' : '🤝 Any'}</span>
+        </div>
+        <button class="save-btn ${saved.has(l.id) ? 'saved' : ''}" onclick="toggleSave(event,${l.id})">${saved.has(l.id) ? '❤️' : '🤍'}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${l.title}</div>
+        <div class="card-area">📍 ${l.area}</div>
+        <div class="card-meta">
+          <div class="card-rent">₹${l.rent.toLocaleString()} <span>/month</span></div>
+          <div class="card-rating">
+            <span class="stars">⭐</span>
+            <span class="score">${l.rating}</span>
+            <span class="count">(${l.reviews})</span>
+          </div>
+        </div>
+        <div class="amenities">
+          ${l.amenities.slice(0,4).map(a => `<span class="amenity-tag">${a}</span>`).join('')}
+          ${l.amenities.length > 4 ? `<span class="amenity-tag">+${l.amenities.length - 4}</span>` : ''}
+        </div>
+        <div class="card-footer">
+          <div>
+            <div class="distance">🚶 ${l.distance} km from college</div>
+            <div class="sharing">${l.sharing} sharing · ₹${l.deposit.toLocaleString()} deposit</div>
+          </div>
+          <button class="view-btn">View →</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleSave(e, id) {
+  e.stopPropagation();
+  if (saved.has(id)) { saved.delete(id); showToast('Removed from saved'); }
+  else { saved.add(id); showToast('Saved! 🔖'); }
+  filterListings();
+}
+
+function openModal(id) {
+  const l = LISTINGS.find(x => x.id === id);
+  if (!l) return;
+  document.getElementById('modalImg').src = l.img;
+  document.getElementById('modalTitle').textContent = l.title;
+  document.getElementById('modalLocation').innerHTML = `📍 ${l.area}`;
+  document.getElementById('modalRent').textContent = `₹${l.rent.toLocaleString()}`;
+  document.getElementById('modalDeposit').textContent = `₹${l.deposit.toLocaleString()}`;
+  document.getElementById('modalDist').textContent = `${l.distance} km`;
+  document.getElementById('modalSharing').textContent = l.sharing;
+  document.getElementById('modalDesc').textContent = l.description;
+  document.getElementById('modalVerified').innerHTML = l.verified ? '<span class="badge verified">✅ Verified by '+l.verifiedCount+' students</span>' : '';
+  document.getElementById('modalGenderBadge').innerHTML = `<span class="badge ${l.gender === 'Female' ? 'gender-f' : l.gender === 'Male' ? 'gender-m' : 'gender-a'}">${l.gender === 'Female' ? '👩 Girls' : l.gender === 'Male' ? '👨 Boys' : '🤝 Any'}</span>`;
+  document.getElementById('modalType').innerHTML = `<span class="badge type">${l.type}</span>`;
+  document.getElementById('modalAmenities').innerHTML = l.amenities.map(a => `<span class="modal-amenity">${a}</span>`).join('');
+  document.getElementById('srOverall').textContent = `${l.rating} ⭐`;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
+// Init
+renderListings(LISTINGS);
+</script>
+</body>
+</html>
