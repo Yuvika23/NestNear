@@ -1,6 +1,8 @@
 {
   "name": "pg-finder-backend",
   "version": "1.0.0",
+  "engines": {
+    "node": "18.x",
   "description": "Backend API for PG & Room Finder for College Students",
   "main": "server.js",
   "scripts": {
