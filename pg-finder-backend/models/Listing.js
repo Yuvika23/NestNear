@@ -25,12 +25,12 @@ const listingSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['PG', 'Flat', 'Hostel', 'Room'],
+    enum: ["PG", "Flat", "Hostel", "Room"],
     required: true
   },
   gender: {
     type: String,
-    enum: ['Male', 'Female', 'Any'],
+    enum: ["Male", "Female", "Any"],
     required: true
   },
   address: {
@@ -40,7 +40,7 @@ const listingSchema = new mongoose.Schema({
     pincode: String,
     // GeoJSON for map integration
     location: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
+      type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], default: [0, 0] } // [longitude, latitude]
     }
   },
@@ -50,7 +50,7 @@ const listingSchema = new mongoose.Schema({
   },
   amenities: [{
     type: String,
-    enum: ['WiFi', 'AC', 'Geyser', 'Laundry', 'Meals', 'Parking', 'CCTV', 'Gym', 'Power Backup']
+    enum: ["WiFi", "AC", "Geyser", "Laundry", "Meals", "Parking", "CCTV", "Gym", "Power Backup"]
   }],
   photos: [{ type: String }], // URLs to images
   availability: {
@@ -59,7 +59,7 @@ const listingSchema = new mongoose.Schema({
   },
   sharingType: {
     type: String,
-    enum: ['Single', 'Double', 'Triple'],
+    enum: ["Single", "Double", "Triple"],
     required: true
   },
   verifiedCount: {
@@ -101,6 +101,6 @@ listingSchema.methods.checkVerification = function() {
 module.exports = mongoose.model('Listing', listingSchema);
 semesterAvailability: {
   type: String,
-  enum: ['odd', 'even', 'both', 'yearround'],
+  enum: ["odd", "even", "both", "yearround"],
   default: 'yearround'
 },
