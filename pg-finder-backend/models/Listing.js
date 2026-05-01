@@ -101,6 +101,5 @@ listingSchema.methods.checkVerification = function() {
 module.exports = mongoose.model('Listing', listingSchema);
 semesterAvailability: {
   type: String,
-  enum: ["odd", "even", "both", "yearround"],
   default: 'yearround'
 },
