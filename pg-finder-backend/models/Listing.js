@@ -82,6 +82,10 @@ const listingSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  semesterAvailability: {
+    type: String,
+    default: 'yearround'
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -99,7 +103,3 @@ listingSchema.methods.checkVerification = function() {
 };
 
 module.exports = mongoose.model('Listing', listingSchema);
-semesterAvailability: {
-  type: String,
-  default: 'yearround'
-},
