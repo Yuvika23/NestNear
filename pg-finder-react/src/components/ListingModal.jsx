@@ -4,6 +4,7 @@ import { mlAPI } from '../services/mlApi';
 import { listingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ReviewSection from './ReviewSection';
+import SemesterBadge from './SemesterBadge';
 
 const GENDER_CONFIG = {
   Female: { label: '👩 Girls', cls: 'gender-f' },
