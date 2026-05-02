@@ -90,7 +90,6 @@ export default function ListingModal({ listing, onClose, onOpenListing }) {
 
         <div className="modal-body">
           {/* Badges */}
-          import SemesterBadge from './SemesterBadge';
           <div style={{ marginBottom:'20px' }}>
             <SemesterBadge value={listing.semesterAvailability} showAvailability />
           </div>
