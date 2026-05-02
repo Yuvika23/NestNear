@@ -178,12 +178,24 @@ function HomePage() {
       base = base.filter(l =>
         l.title?.toLowerCase().includes(q) ||
         l.address?.area?.toLowerCase().includes(q) ||
-        l.address?.city?.toLowerCase().includes(q) ||
         l.amenities?.some(a => a.toLowerCase().includes(q))
       );
     }
+    if (filters.gender) base = base.filter(l => l.gender === filters.gender || l.gender === 'Any');
+    if (filters.type) base = base.filter(l => l.type === filters.type);
+    if (filters.maxRent) base = base.filter(l => l.rent <= Number(filters.maxRent));
+    if (filters.verified) base = base.filter(l => l.isVerified);
+    if (filters.availability === 'true') base = base.filter(l => l.availability);
+    if (filters.semester) base = base.filter(l => {
+      const s = l.semesterAvailability || 'yearround';
+      return s === 'yearround' || s === 'both' || s === filters.semester;
+    });
+    if (filters.sort === 'rent_asc') base = [...base].sort((a,b) => a.rent - b.rent);
+    if (filters.sort === 'rent_desc') base = [...base].sort((a,b) => b.rent - a.rent);
+    if (filters.sort === 'rating') base = [...base].sort((a,b) => b.averageRating - a.averageRating);
+    if (filters.sort === 'distance') base = [...base].sort((a,b) => a.distanceFromCollege - b.distanceFromCollege);
     return base;
-  }, [nearbyListings, filters.search]);
+  }, [nearbyListings, filters]);
 
   const toggleSave = (id) => setSaved(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next;
